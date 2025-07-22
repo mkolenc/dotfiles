@@ -28,7 +28,7 @@ else
 fi
 
 # Check for required commands
-REQUIRED_CMDS=(curl grep sha256sum minisign)
+REQUIRED_CMDS=(curl sha256sum minisign nvme sgdisk partprobe mkfs.vfat mkfs.ext4 mkswap swapon mount)
 for cmd in "${REQUIRED_CMDS[@]}"; do
     if ! command -v "$cmd" &>/dev/null; then
         err "Missing required command: $cmd"

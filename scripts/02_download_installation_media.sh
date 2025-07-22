@@ -8,21 +8,24 @@ BASE_URL="https://repo-default.voidlinux.org/live/current"
 GITHUB_KEY_BASE="https://raw.githubusercontent.com/void-linux/void-packages/master/srcpkgs/void-release-keys/files"
 
 # Get latest ROOTFS tarball name
-TARBALL=$(curl -s "$BASE_URL/" | grep -oE 'void-x86_64-ROOTFS-[0-9]+\.tar\.xz' | sort -V | tail -n1)
-DATE=$(echo "$TARBALL" | grep -oE '[0-9]{8}')
+tarball=$(curl -s "$BASE_URL/" | grep -oE 'void-x86_64-ROOTFS-[0-9]+\.tar\.xz' | sort -V | tail -n1)
+date=$(echo "$tarball" | grep -oE '[0-9]{8}')
 
-if [ -z "$TARBALL" ] || [ -z "$DATE" ]; then
+if [ -z "$tarball" ] || [ -z "$date" ]; then
     err "Error: Could not find latest tarball or extract date."
 fi
 
-ok "Found tarball: $TARBALL"
-ok "Date extracted: $DATE"
+ok "Found tarball: $tarball"
+ok "Date extracted: $date"
 
-# Download files
+# Move into DOWNLOAD_DIR if defined
+if [[ -n "$DOWNLOAD_DIR" ]]; then
+    pushd "$DOWNLOAD_DIR" > /dev/null
+fi
+
 msg "Downloading tarball and related files..."
-pushd "$DOWNLOAD_DIR" >/dev/null
 
-curl -sS -O "$BASE_URL/$TARBALL"
+curl -sS -O "$BASE_URL/$tarball"
 ok "Downloaded tarball"
 
 curl -sS -O "$BASE_URL/sha256sum.txt"
@@ -30,18 +33,18 @@ curl -sS -O "$BASE_URL/sha256sum.sig"
 ok "Downloaded checksums"
 
 # Fetch pubkey from GitHub
-PUB_KEY="void-release-${DATE}.pub"
-PUB_URL="${GITHUB_KEY_BASE}/${PUB_KEY}"
+pub_key="void-release-${date}.pub"
+pub_url="${GITHUB_KEY_BASE}/${pub_key}"
 
-curl -sSfL "$PUB_URL" -o "$PUB_KEY" || {
-    err "Failed to download key: $PUB_KEY"
+curl -sSfL "$pub_url" -o "$pub_key" || {
+    err "Failed to download key: $pub_key"
 }
-ok "Downloaded public key: $PUB_KEY"
+ok "Downloaded public key: $pub_key"
 
 msg "Verifying downloads..."
 
 # Verify sha256sum.txt signature
-if minisign -Vm sha256sum.txt -x sha256sum.sig -p "$PUB_KEY" >/dev/null; then
+if minisign -Vm sha256sum.txt -x sha256sum.sig -p "$pub_key" >/dev/null; then
     ok "Signature verified successfully."
 else
     err "Signature verification failed."
@@ -54,6 +57,10 @@ else
     err "Tarball checksum mismatch."
 fi
 
-ok "All verifications passed for $TARBALL"
-popd >/dev/null
+# Restore previous directory
+if [[ -n "$DOWNLOAD_DIR" ]]; then
+    popd >/dev/null
+fi
+
+ok "All verifications passed for $tarball"
 
