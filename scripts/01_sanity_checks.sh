@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-source "$utils.sh"
+source "$UTILS"
 
 msg "Running sanity checks..."
 
@@ -27,4 +27,14 @@ else
     err "No internet connection. Aborting."
 fi
 
+# Check for required commands
+REQUIRED_CMDS=(curl grep sha256sum minisign)
+for cmd in "${REQUIRED_CMDS[@]}"; do
+    if ! command -v "$cmd" &>/dev/null; then
+        err "Missing required command: $cmd"
+    fi
+done
+ok "Required disk tools present"
+
 ok "All sanity checks passed"
+
