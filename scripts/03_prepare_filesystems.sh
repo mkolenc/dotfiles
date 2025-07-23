@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-source "$UTILS"
+source "$UTILS_PATH"
 
 check_and_optimize_lba_format() {
     local nvme_dev="$1"

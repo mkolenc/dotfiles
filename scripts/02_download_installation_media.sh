@@ -1,66 +1,64 @@
 #!/usr/bin/env bash
 set -e
-source "$UTILS"
+source "$UTILS_PATH"
 
-msg "Fetching latest glibc x86_64 ROOTFS tarball info..."
+# If set, DOWNLOAD_DIR defines the download location. Otherwise, files are saved to the current directory.
 
 BASE_URL="https://repo-default.voidlinux.org/live/current"
 GITHUB_KEY_BASE="https://raw.githubusercontent.com/void-linux/void-packages/master/srcpkgs/void-release-keys/files"
 
-# Get latest ROOTFS tarball name
-tarball=$(curl -s "$BASE_URL/" | grep -oE 'void-x86_64-ROOTFS-[0-9]+\.tar\.xz' | sort -V | tail -n1)
-date=$(echo "$tarball" | grep -oE '[0-9]{8}')
+ROOTFS_TARBALL=""
+PUBLIC_KEY=""
 
-if [ -z "$tarball" ] || [ -z "$date" ]; then
-    err "Error: Could not find latest tarball or extract date."
-fi
+fetch_latest_tarball() {
+    run_cmd "Found latest tarball" \
+        bash -c "curl -s '$BASE_URL/' | grep -oE 'void-x86_64-ROOTFS-[0-9]+\.tar\.xz' | sort -V | tail -n1"
 
-ok "Found tarball: $tarball"
-ok "Date extracted: $date"
-
-# Move into DOWNLOAD_DIR if defined
-if [[ -n "$DOWNLOAD_DIR" ]]; then
-    pushd "$DOWNLOAD_DIR" > /dev/null
-fi
-
-msg "Downloading tarball and related files..."
-
-curl -sS -O "$BASE_URL/$tarball"
-ok "Downloaded tarball"
-
-curl -sS -O "$BASE_URL/sha256sum.txt"
-curl -sS -O "$BASE_URL/sha256sum.sig"
-ok "Downloaded checksums"
-
-# Fetch pubkey from GitHub
-pub_key="void-release-${date}.pub"
-pub_url="${GITHUB_KEY_BASE}/${pub_key}"
-
-curl -sSfL "$pub_url" -o "$pub_key" || {
-    err "Failed to download key: $pub_key"
+    ROOTFS_TARBALL=$(<"$TMP_OUTPUT")
 }
-ok "Downloaded public key: $pub_key"
 
-msg "Verifying downloads..."
+change_to_download_dir() {
+    if [[ -n "$DOWNLOAD_DIR" ]]; then
+        run_cmd "Moving into $DOWNLOAD_DIR" pushd "$DOWNLOAD_DIR"
+    fi
+}
 
-# Verify sha256sum.txt signature
-if minisign -Vm sha256sum.txt -x sha256sum.sig -p "$pub_key" >/dev/null; then
-    ok "Signature verified successfully."
-else
-    err "Signature verification failed."
-fi
+download_files() {
+    local ROOTFS_TARBALL_date=$(echo "$ROOTFS_TARBALL" | grep -oE '[0-9]{8}')
+    PUBLIC_KEY="void-release-${ROOTFS_TARBALL_date}.pub"
+    local public_key_url="${GITHUB_KEY_BASE}/${PUBLIC_KEY}"
 
-# Verify file integrity
-if sha256sum -c --ignore-missing sha256sum.txt >/dev/null; then
-    ok "Tarball integrity verified."
-else
-    err "Tarball checksum mismatch."
-fi
+    run_cmd "Download tarball" \
+        curl -sS -O "$BASE_URL/$ROOTFS_TARBALL"
+    run_cmd "Download sha256sum.txt" \
+        curl -sS -O "$BASE_URL/sha256sum.txt"
+    run_cmd "Download sha256sum.sig" \
+        curl -sS -O "$BASE_URL/sha256sum.sig"
+    run_cmd "Download public key: $PUBLIC_KEY" \
+        curl -sSL "$public_key_url" -o "$PUBLIC_KEY"
+}
 
-# Restore previous directory
-if [[ -n "$DOWNLOAD_DIR" ]]; then
-    popd >/dev/null
-fi
+verify_signature() {
+    run_cmd "Verify signature of sha256sum.txt" \
+        minisign -Vm sha256sum.txt -x sha256sum.sig -p "$PUBLIC_KEY"
+}
 
-ok "All verifications passed for $tarball"
+verify_checksum() {
+    run_cmd "Verify tarball checksum" \
+        sha256sum -c --ignore-missing sha256sum.txt
+}
 
+restore_previous_dir() {
+    if [[ -n "$DOWNLOAD_DIR" ]]; then
+        run_cmd "Returning to working directory" popd
+    fi
+}
+
+msg "Starting ROOTFS tarball fetch and verification..."
+
+fetch_latest_tarball
+change_to_download_dir
+download_files
+verify_signature
+verify_checksum
+restore_previous_dir
