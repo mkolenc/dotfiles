@@ -1,2 +1,2 @@
-# dotfiles
-Personal dotfiles and install script for setting up my Linux system.
+# voidstrap
+Scripts to automate the installation and configuration of Void Linux into a minimal, reproducible Wayland (DWL) system
