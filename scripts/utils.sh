@@ -18,7 +18,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# run_cmd <description> <command...>
+# run_cmd <description> <command>
 run_cmd() {
     local desc="$1"
     shift
@@ -35,4 +35,14 @@ run_cmd() {
         echo -e "${RED}<<< Output End <<<${RST}\n" >&2
         exit 1
     fi
+}
+
+# check_vars_set <var1> <var2> ... 
+check_vars_set() {
+    for var in "$@"; do
+        if [[ -z "${!var-}" ]]; then
+            echo "Error: $var is not set. Aborting." >&2
+            exit 1
+        fi
+    done
 }

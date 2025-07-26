@@ -2,8 +2,6 @@
 set -e
 source "$UTILS_PATH"
 
-# If set, DOWNLOAD_DIR defines the download location. Otherwise, files are saved to the current directory.
-
 BASE_URL="https://repo-default.voidlinux.org/live/current"
 GITHUB_KEY_BASE="https://raw.githubusercontent.com/void-linux/void-packages/master/srcpkgs/void-release-keys/files"
 
@@ -19,10 +17,8 @@ fetch_latest_tarball() {
 }
 
 change_to_download_dir() {
-    if [[ -n "$DOWNLOAD_DIR" ]]; then
-        run_cmd "Moving into $DOWNLOAD_DIR" \
-            pushd "$DOWNLOAD_DIR"
-    fi
+    run_cmd "Moving into $DOWNLOAD_DIR" \
+        pushd "$DOWNLOAD_DIR"
 }
 
 download_files() {
@@ -51,13 +47,12 @@ verify_checksum() {
 }
 
 restore_previous_dir() {
-    if [[ -n "$DOWNLOAD_DIR" ]]; then
-        run_cmd "Returning to working directory" \
-            popd
-    fi
+    run_cmd "Returning to working directory" \
+        popd
 }
 
 msg "Starting ROOTFS tarball fetch and verification..."
+check_vars_set DOWNLOAD_DIR
 
 fetch_latest_tarball
 change_to_download_dir

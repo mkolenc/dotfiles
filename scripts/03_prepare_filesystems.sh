@@ -2,11 +2,6 @@
 set -e
 source "$UTILS_PATH"
 
-check_disk_var() {
-    run_cmd "Disk has been selected" \
-        test -n "$DISK"
-}
-
 check_and_optimize_lba_format() {
     run_cmd "Fetching LBA formats for $DISK" \
         bash -o pipefail -c \
@@ -14,17 +9,14 @@ check_and_optimize_lba_format() {
     local LBA_formats=$(<"$TMP_OUTPUT")
     
     run_cmd "Identifying active LBA format" \
-        bash -o pipefail -c \
         "grep '(in use)' <<< \"$LBA_formats\""
     local curr_format=$(<"$TMP_OUTPUT")
 
     run_cmd "Extracting current LBA format number" \
-        bash -o pipefail -c \
         "grep -oP 'LBA Format\\s+\\K\\d+' <<< \"$curr_format\""
     local curr_LBA_num=$(<"$TMP_OUTPUT")
 
     run_cmd "Extracting current LBA data size" \
-        bash -o pipefail -c \
         "grep -oP 'Data Size:\\s+\\K[0-9]+' <<< \"$curr_format\""
     local curr_LBA_data_size=$(<"$TMP_OUTPUT")
 
@@ -36,12 +28,10 @@ check_and_optimize_lba_format() {
     local optimal_format=$(<"$TMP_OUTPUT")
 
     run_cmd "Extracting optimal LBA format number" \
-        bash -o pipefail -c \
         "grep -oP 'LBA Format\\s+\\K\\d+' <<< \"$optimal_format\""
     local optimal_LBA_num=$(<"$TMP_OUTPUT")
 
     run_cmd "Extracting optimal LBA data size" \
-        bash -o pipefail -c \
         "grep -oP 'Data Size:\\s+\\K[0-9]+' <<< \"$optimal_format\""
     local optimal_LBA_data_size=$(<"$TMP_OUTPUT")
 
@@ -79,7 +69,7 @@ create_partitions() {
         sgdisk --new=1::512M --typecode=1:EF00 --change-name=1:'EFI SYSTEM' "$DISK"
 
     run_cmd "Creating root partition" \
-        sgdisk --new=2::-0 --typecode=2::8300 --change-name=2:'LINUX ROOT' "$DISK"
+        sgdisk --new=2::-0 --typecode=2:8300 --change-name=2:'LINUX ROOT' "$DISK"
 
     run_cmd "Refreshing the partition table" \
         partprobe "$DISK" && sleep 1
@@ -99,10 +89,10 @@ format_partitions() {
 mount_partitions() {
     local EFI_PART="${DISK}p1"
     local ROOT_PART="${DISK}p2"
-    local EFI_MOUNTPOINT="/mnt/boot/efi"
+    local EFI_MOUNTPOINT="${CHROOT_DIR}/boot/efi"
 
     run_cmd "Mounting the root partition" \
-        mount -o defaults,noatime -t ext4 "$ROOT_PART" /mnt
+        mount -o defaults,noatime -t ext4 "$ROOT_PART" "$CHROOT_DIR"
 
     run_cmd "Creating EFI directory $EFI_MOUNTPOINT" \
         mkdir -p "$EFI_MOUNTPOINT"
@@ -113,6 +103,7 @@ mount_partitions() {
 
 
 msg "Preparing disk for installation..."
+check_vars_set DISK CHROOT_DIR
 
 check_disk_var
 check_and_optimize_lba_format
