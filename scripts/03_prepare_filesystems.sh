@@ -45,9 +45,8 @@ check_and_optimize_lba_format() {
     # Attempt to format the disk to the optimal LBA sector size.
     # Note: Some NVMe drives advertise formats that are not actually supported.
     # This is a common failure case — it should *not* abort the install process.
-    msg "Formatting $DISK to sector size $optimal_LBA_data_size (was $curr_LBA_data_size)"
     if nvme format --lbaf="$optimal_LBA_num" --force "$DISK" >/dev/null 2>&1; then
-        ok "Successfully formatted $DISK to $optimal_LBA_data_size bytes"
+        ok "Successfully formatted $DISK to sector size $optimal_LBA_data_size (was $curr_LBA_data_size)"
     else
         warn "Could not format $DISK to optimal sector size — this is a known limitation on some NVMe drives"
     fi
@@ -106,7 +105,7 @@ msg "Preparing disk for installation..."
 check_vars_set DISK CHROOT_DIR
 
 check_and_optimize_lba_format
-#create_partition_table
-#create_partitions
-#format_partitions
-#mount_partitions
+create_partition_table
+create_partitions
+format_partitions
+mount_partitions

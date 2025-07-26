@@ -4,10 +4,6 @@ FLAG="$1"
 
 if [[ "$FLAG" != "in_chroot" ]]; then
     echo "Running on main system"
-    sleep 2
-
-    cp "$0" /home/mkolenc/Downloads
-    bash /home/mkolenc/Downloads/$0 in_chroot
 
     # Copy self to new system
     #cp "$0" "$CHROOT_DIR/root/install.sh"
@@ -26,7 +22,6 @@ fi
 # === below here is code that runs inside chroot ===
 
 echo "Running inside chroot — continuing install"
-sleep 2
 
-# your install steps:
-# set hostname, locales, user, grub, etc.
+
+

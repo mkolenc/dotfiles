@@ -11,7 +11,7 @@ PUBLIC_KEY=""
 fetch_latest_tarball() {
     run_cmd "Fetching latest ROOTFS tarball name" \
         bash -o pipefail -c \
-        'curl -sf "$BASE_URL/" | grep -oE "void-x86_64-ROOTFS-[0-9]+\.tar\.xz" | sort -V | tail -n1'
+        "curl -sf '$BASE_URL/' | grep -oE 'void-x86_64-ROOTFS-[0-9]+\.tar\.xz' | sort -V | tail -n1"
 
     ROOTFS_TARBALL=$(<"$TMP_OUTPUT")
 }
