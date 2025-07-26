@@ -11,7 +11,7 @@ PUBLIC_KEY=""
 fetch_latest_tarball() {
     run_cmd "Fetching latest ROOTFS tarball name" \
         bash -o pipefail -c \
-        "curl -sf '$BASE_URL/' | grep -oE 'void-x86_64-ROOTFS-[0-9]+\.tar\.xz' | sort -V | tail -n1"
+        'curl -sf "$BASE_URL/" | grep -oE "void-x86_64-ROOTFS-[0-9]+\.tar\.xz" | sort -V | tail -n1'
 
     ROOTFS_TARBALL=$(<"$TMP_OUTPUT")
 }
@@ -22,7 +22,7 @@ change_to_download_dir() {
 }
 
 download_files() {
-    local ROOTFS_TARBALL_date=$(echo "$ROOTFS_TARBALL" | grep -oE '[0-9]{8}')
+    local ROOTFS_TARBALL_date=$(echo "$ROOTFS_TARBALL" | grep -oE "[0-9]{8}")
     PUBLIC_KEY="void-release-${ROOTFS_TARBALL_date}.pub"
     local public_key_url="${GITHUB_KEY_BASE}/${PUBLIC_KEY}"
 

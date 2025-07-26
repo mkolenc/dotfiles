@@ -5,34 +5,34 @@ source "$UTILS_PATH"
 check_and_optimize_lba_format() {
     run_cmd "Fetching LBA formats for $DISK" \
         bash -o pipefail -c \
-        "nvme id-ns -H '$DISK' | grep 'Relative Performance'"
-    local LBA_formats=$(<"$TMP_OUTPUT")
-    
+        'nvme id-ns -H "$DISK" | grep "Relative Performance"'
+    LBA_formats=$(<"$TMP_OUTPUT")
+
     run_cmd "Identifying active LBA format" \
-        "grep '(in use)' <<< \"$LBA_formats\""
+        grep "(in use)" <<< "$LBA_formats"
     local curr_format=$(<"$TMP_OUTPUT")
 
     run_cmd "Extracting current LBA format number" \
-        "grep -oP 'LBA Format\\s+\\K\\d+' <<< \"$curr_format\""
+	grep -oP "LBA Format\\s+\\K\\d+" <<< "$curr_format"
     local curr_LBA_num=$(<"$TMP_OUTPUT")
 
     run_cmd "Extracting current LBA data size" \
-        "grep -oP 'Data Size:\\s+\\K[0-9]+' <<< \"$curr_format\""
+        grep -oP "Data Size:\\s+\\K[0-9]+" <<< "$curr_format"
     local curr_LBA_data_size=$(<"$TMP_OUTPUT")
 
     ok "Current sector size: $curr_LBA_data_size bytes (LBA Format $curr_LBA_num)"
 
     run_cmd "Finding optimal LBA format" \
         bash -o pipefail -c \
-        "sort -k17,17 <<< \"$LBA_formats\" | head -n1"
+        'sort -k17,17 <<< "$1" | head -n1' _ "$LBA_formats"
     local optimal_format=$(<"$TMP_OUTPUT")
 
     run_cmd "Extracting optimal LBA format number" \
-        "grep -oP 'LBA Format\\s+\\K\\d+' <<< \"$optimal_format\""
+        grep -oP "LBA Format\\s+\\K\\d+" <<< "$optimal_format"
     local optimal_LBA_num=$(<"$TMP_OUTPUT")
 
     run_cmd "Extracting optimal LBA data size" \
-        "grep -oP 'Data Size:\\s+\\K[0-9]+' <<< \"$optimal_format\""
+        grep -oP "Data Size:\\s+\\K[0-9]+" <<< "$optimal_format"
     local optimal_LBA_data_size=$(<"$TMP_OUTPUT")
 
     ok "Optimal sector size: $optimal_LBA_data_size bytes (LBA Format $optimal_LBA_num)"
@@ -105,9 +105,8 @@ mount_partitions() {
 msg "Preparing disk for installation..."
 check_vars_set DISK CHROOT_DIR
 
-check_disk_var
 check_and_optimize_lba_format
-create_partition_table
-create_partitions
-format_partitions
-mount_partitions
+#create_partition_table
+#create_partitions
+#format_partitions
+#mount_partitions
