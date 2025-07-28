@@ -37,6 +37,10 @@ run_cmd() {
     fi
 }
 
+get_cmd_output() {
+    cat "$TMP_OUTPUT"
+}
+
 # check_vars_set <var1> <var2> ... 
 check_vars_set() {
     for var in "$@"; do

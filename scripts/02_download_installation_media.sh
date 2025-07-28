@@ -11,18 +11,18 @@ PUBLIC_KEY=""
 fetch_latest_tarball() {
     run_cmd "Fetching latest ROOTFS tarball name" \
         bash -o pipefail -c \
-        "curl -sf '$BASE_URL/' | grep -oE 'void-x86_64-ROOTFS-[0-9]+\.tar\.xz' | sort -V | tail -n1"
+        'curl -sf "$1/" | grep -oE "void-x86_64-ROOTFS-[0-9]+\.tar\.xz" | sort -V | tail -n1' _ "$BASE_URL"
 
-    ROOTFS_TARBALL=$(<"$TMP_OUTPUT")
+    ROOTFS_TARBALL=$(get_cmd_output)
 }
 
 change_to_download_dir() {
     run_cmd "Moving into $DOWNLOAD_DIR" \
-        pushd "$DOWNLOAD_DIR"
+        cd $DOWNLOAD_DIR
 }
 
 download_files() {
-    local ROOTFS_TARBALL_date=$(echo "$ROOTFS_TARBALL" | grep -oE "[0-9]{8}")
+    local ROOTFS_TARBALL_date=$(grep -oE "[0-9]{8}" <<< "$ROOTFS_TARBALL")
     PUBLIC_KEY="void-release-${ROOTFS_TARBALL_date}.pub"
     local public_key_url="${GITHUB_KEY_BASE}/${PUBLIC_KEY}"
 
@@ -46,11 +46,6 @@ verify_checksum() {
         sha256sum -c --ignore-missing sha256sum.txt
 }
 
-restore_previous_dir() {
-    run_cmd "Returning to working directory" \
-        popd
-}
-
 msg "Starting ROOTFS tarball fetch and verification..."
 check_vars_set DOWNLOAD_DIR
 
@@ -59,4 +54,3 @@ change_to_download_dir
 download_files
 verify_signature
 verify_checksum
-restore_previous_dir

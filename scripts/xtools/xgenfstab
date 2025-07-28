@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 die() {
 	printf "$PROG: %s\n" "$*" >&2

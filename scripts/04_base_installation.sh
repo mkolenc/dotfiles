@@ -1,27 +1,34 @@
 #!/usr/bin/env bash
+set -e
+source "$UTILS_PATH"
 
-FLAG="$1"
+unpack_tarball_into_chroot() {
+    run_cmd "Unpacking the tarball" \
+        tar xJf "$DOWNLOAD_DIR/void-x86_64-ROOTFS-*.tar.xz" -C "$CHROOT_DIR"
+}
 
-if [[ "$FLAG" != "in_chroot" ]]; then
-    echo "Running on main system"
+install_base_system() {
+    run_cmd "Updating the packages" \
+        "$XTOOLS_DIR/xchroot" "$CHROOT_DIR" /bin/sh -e -c '
+            xbps-install -Su -y xbps &&
+            xbps-install -u -y
+        '
 
-    # Copy self to new system
-    #cp "$0" "$CHROOT_DIR/root/install.sh"
-    #chmod +x "$CHROOT_DIR/root/install.sh"
+    run_cmd "Installing the base system" \
+        "$XTOOLS_DIR/xchroot" "$CHROOT_DIR" /bin/sh -e -c '
+            xbps-install -y base-system &&
+            xbps-remove -Ro -y base-container-full
+        '
+}
 
-    # Run inside chroot with flag
-    #xchroot "$CHROOT_DIR" /root/install.sh in_chroot
+generate_fstab() {
+    run_cmd "Writing the fstab" \
+        "$XTOOLS_DIR/xgenfstab" -U "$CHROOT_DIR" > "$ROOT_DIR/etc/fstab"
+}
 
-    echo "back in main system"
-    sleep 2
+msg "Installing Void on the new system..."
+check_vars_set DOWNLOAD_DIR CHROOT_DIR XTOOLS_DIR
 
-    exit $?
-
-fi
-
-# === below here is code that runs inside chroot ===
-
-echo "Running inside chroot — continuing install"
-
-
-
+unpack_tarball_into_chroot
+install_base_system
+generate_fstab
