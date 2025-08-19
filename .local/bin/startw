@@ -1,0 +1,17 @@
+#!/bin/sh
+# Start a Wayland session
+set -e
+
+# Set environment variables needed by Wayland applications
+XDG_RUNTIME_DIR="/tmp/xdg-runtime-$(id -u)"
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+
+export XDG_RUNTIME_DIR
+export QT_QPA_PLATFORM=wayland
+export ELM_DISPLAY=wl
+export SDL_VIDEODRIVER=wayland
+export MOZ_ENABLE_WAYLAND=1
+
+# Launch DWL inside a D-Bus session
+exec dbus-run-session dwl -s "$HOME/.local/bin/dwl/autostart.sh"

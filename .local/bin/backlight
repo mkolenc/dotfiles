@@ -1,0 +1,15 @@
+#!/bin/sh
+# Adjust screen brightness using brightnessctl
+
+case "$1" in
+    up)
+        brightnessctl -e set 5%+
+        ;;
+    down)
+        brightnessctl -e set 5%-
+        ;;
+    *)
+        echo "Usage: \"$0\" <up|down>" >&2
+        exit 1
+        ;;
+esac

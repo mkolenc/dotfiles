@@ -1,0 +1,32 @@
+#!/bin/sh
+# Increase, decrease or mute the volume source & sink
+
+case "$1" in
+	mute)
+		wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+		;;
+	down)
+		# Set the volume on (if it was muted)
+		wpctl set-mute @DEFAULT_AUDIO_SINK@ 0
+		wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+		;;
+	up)
+		wpctl set-mute @DEFAULT_AUDIO_SINK@ 0
+		wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+
+		;;
+	micmute)
+		wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+		# Handle the status LED manually
+		for led in /sys/class/leds/*micmute/; do
+			[ -d "$led" ] || continue
+			case "$(wpctl get-volume @DEFAULT_AUDIO_SOURCE@)" in
+				*MUTED*) echo "1" > "$led/brightness";;
+				*      ) echo "0" > "$led/brightness";;
+			esac
+		done
+		;;
+    *)
+		echo "Usage: $0 <up|down|mute|micmute>" >&2
+		exit 1
+        ;;
+esac
