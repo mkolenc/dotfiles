@@ -1,5 +1,5 @@
 # dwl build files
-.config/dwl/dwl
-.config/dwl/*.o
-.config/dwl/*-protocol.h
+.config/dwl*/dwl
+.config/dwl*/*.o
+.config/dwl*/*-protocol.h
 
